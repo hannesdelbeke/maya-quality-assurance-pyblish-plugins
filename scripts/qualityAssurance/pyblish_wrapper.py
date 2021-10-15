@@ -62,6 +62,10 @@ def create_plugin_from_check(check):
     if check.isFixable():
         actions_value.append(ActionFix)
 
+    # hide non selectable actions
+    if check.isSelectable():
+        actions_value.append(ActionSelect)
+
     class QualityAssuranceWrapperPlugin(pyblish.api.Validator):
         # plugin attributes
         families = check._categories
@@ -69,7 +73,7 @@ def create_plugin_from_check(check):
         label = 'Scene: ' + check._name
         optional = True
         __doc__ = check.__doc__
-        actions = [ActionFix]
+        actions = actions_value
         check_class = check_type
 
         def process(self, context):
@@ -101,11 +105,30 @@ class ActionFix(pyblish.api.Action):
         check = plugin_inst.check
 
         if not check.isFixable():
-            log.warning('fix is not supported for this check')
+            log.warning('fix is not supported for this check:' + check._name)
             return
 
         check.fix()
         assert check.state == SUCCESS, 'failed to fix.'
         log.info('fixing: ' + plugin.label)
         # todo after the fix ideally we also update pyblish plugin to set state to green?
+
+
+class ActionSelect(pyblish.api.Action):
+    label = "select failed nodes"
+    on = "failedOrWarning"
+    icon = "hand-o-up"  # Icon from Awesome Icon
+
+    def process(self, context, plugin):
+        # get used plugin instance
+        plugin_inst = context.data[plugin.label]
+        check = plugin_inst.check
+
+        if not check.isSelectable():
+            log.warning('select is not supported for this check:' + check._name)
+            return
+
+        check.select()
+        log.info('selecting: ' + str(check.errors))
+
 
