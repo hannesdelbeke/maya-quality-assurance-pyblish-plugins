@@ -56,6 +56,12 @@ def create_plugin_from_check(check):
     returns a Pyblish plugin class, wrapped around the check.
     """
     check_type = type(check)
+
+    # hide non fixable actions
+    actions_value = []
+    if check.isFixable():
+        actions_value.append(ActionFix)
+
     class QualityAssuranceWrapperPlugin(pyblish.api.Validator):
         # plugin attributes
         families = check._categories
@@ -86,7 +92,7 @@ def create_plugin_from_check(check):
 
 class ActionFix(pyblish.api.Action):
     label = "Fix"
-    on = "failedOrWarning"  # todo is it possible to link this with check.isFixable?
+    on = "failedOrWarning"
     icon = "hand-o-up"  # Icon from Awesome Icon
 
     def process(self, context, plugin):
