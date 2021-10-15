@@ -63,11 +63,12 @@ def create_plugin_from_check(check):
         label = 'Scene: ' + check._name
         optional = True
         __doc__ = check.__doc__
-
+        actions = [ActionFix]
         check_class = check_type
 
         def process(self, context):
             self.check = self.check_class()
+            context.data[self.label] = self
             if self.check.isFindable():
                 self.check.find()
 
@@ -81,3 +82,24 @@ def create_plugin_from_check(check):
 
     QualityAssuranceWrapperPlugin.__name__ = 'Validate' + check.__class__.__name__ + 'PyblishWrapper'
     return QualityAssuranceWrapperPlugin
+
+
+class ActionFix(pyblish.api.Action):
+    label = "Fix"
+    on = "failedOrWarning"  # todo is it possible to link this with check.isFixable?
+    icon = "hand-o-up"  # Icon from Awesome Icon
+
+    def process(self, context, plugin):
+        # get used plugin instance
+        plugin_inst = context.data[plugin.label]
+        check = plugin_inst.check
+
+        if not check.isFixable():
+            log.warning('fix is not supported for this check')
+            return
+
+        check.fix()
+        assert check.state == SUCCESS, 'failed to fix.'
+        log.info('fixing: ' + plugin.label)
+        # todo after the fix ideally we also update pyblish plugin to set state to green?
+
