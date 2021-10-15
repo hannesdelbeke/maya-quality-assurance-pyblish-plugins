@@ -66,22 +66,17 @@ def create_plugin_from_check(check):
 
         check_class = check_type
 
-        # check attributes
-        _check_error_msg = check._message
-        _check_findable = check.isFindable()
-        _check_find = check.find
-
         def process(self, context):
             self.check = self.check_class()
-            if self._check_findable:
+            if self.check.isFindable():
                 self.check.find()
 
                 if self.check.state == ERROR:
-                    raise Exception(self._check_error_msg)
+                    raise Exception(self.check._message)
                     # assert not self.check.errors, self._check_error_msg
 
                 if self.check.state == WARNING:
-                    log.warning(self._check_error_msg)
+                    log.warning(self.check._message)
 
 
     QualityAssuranceWrapperPlugin.__name__ = 'Validate' + check.__class__.__name__ + 'PyblishWrapper'
