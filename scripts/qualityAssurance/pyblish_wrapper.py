@@ -3,6 +3,13 @@ import pyblish
 import pyblish.api
 import pyblish.util
 
+import logging
+log = logging.getLogger("pyblish.plugin")
+
+# qualityAssurance state levels
+SUCCESS = 0
+WARNING = 1
+ERROR = 2
 
 # if you register plugin path this wont be picked up
 # this class adds support for this
@@ -65,13 +72,17 @@ def create_plugin_from_check(check):
         _check_find = check.find
 
         def process(self, context):
-            check = self.check_class()
+            self.check = self.check_class()
             if self._check_findable:
-                check.find()
-                # self._check_find()
-                print(check.errors)
-                assert not check.errors, self._check_error_msg
-            # self.log.info("Publishing to studio library.")
+                self.check.find()
+
+                if self.check.state == ERROR:
+                    raise Exception(self._check_error_msg)
+                    # assert not self.check.errors, self._check_error_msg
+
+                if self.check.state == WARNING:
+                    log.warning(self._check_error_msg)
+
 
     QualityAssuranceWrapperPlugin.__name__ = 'Validate' + check.__class__.__name__ + 'PyblishWrapper'
     return QualityAssuranceWrapperPlugin
